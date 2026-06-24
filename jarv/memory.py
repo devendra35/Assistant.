@@ -108,5 +108,24 @@ class Memory:
         )
         self.conn.commit()
         return cur.lastrowid
+         def complete_task(self, task_id: int):
+        cur = self.conn.cursor()
+        cur.execute(
+            "UPDATE tasks SET status='done', done_at=? WHERE id=?",
+            (datetime.utcnow().isoformat(), task_id),
+        )
+        self.conn.commit()
+
+    def get_pending_tasks(self) -> list[dict]:
+        cur = self.conn.cursor()
+        cur.execute("SELECT * FROM tasks WHERE status='pending' ORDER BY id")
+        return [dict(r) for r in cur.fetchall()]
+
+    def __del__(self):
+        try:
+            self.conn.close()
+        except Exception:
+            pass
+
 
 
