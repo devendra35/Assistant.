@@ -44,4 +44,13 @@ class Memory:
             );
         """)
         self.conn.commit()
+        def add_message(self, role: str, content: str, session_id: str = "default"):
+        cur = self.conn.cursor()
+        cur.execute(
+            "INSERT INTO conversations (role, content, timestamp, session_id) VALUES (?, ?, ?, ?)",
+            (role, content, datetime.utcnow().isoformat(), session_id),
+        )
+        self.conn.commit()
+        self._trim_history()
+
 
