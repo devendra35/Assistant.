@@ -52,5 +52,61 @@ class Memory:
         )
         self.conn.commit()
         self._trim_history()
+         def get_context(self, session_id: str = "default") -> list[dict]:
+        cur = self.conn.cursor()
+        cur.execute(
+            """SELECT role, content FROM conversations
+               WHERE session_id = ?
+               ORDER BY id DESC LIMIT ?""",
+            (session_id, CONTEXT_WINDOW),
+        )
+        rows = cur.fetchall()
+        return [{"role": r["role"], "content": r["content"]} for r in reversed(rows)]
+
+    def clear_history(self, session_id: str = "default"):
+        cur = self.conn.cursor()
+        cur.execute("DELETE FROM conversations WHERE session_id = ?", (session_id,))
+        self.conn.commit()
+        logger.info("Conversation history cleared.")
+
+    def _trim_history(self):
+        cur = self.conn.cursor()
+        cur.execute(
+            """DELETE FROM conversations WHERE id IN (
+                SELECT id FROM conversations ORDER BY id ASC
+                LIMIT MAX(0, (SELECT COUNT(*) FROM conversations) - ?)
+            )""",
+            (MAX_MEMORY_ITEMS,),
+        )
+        self.conn.commit()
+
+    def remember(self, key: str, value: str):
+        cur = self.conn.cursor()
+        cur.execute(
+            "INSERT INTO facts(key, value, updated_at) VALUES(?,?,?) "
+            "ON CONFLICT(key) DO UPDATE SET value=excluded.value, updated_at=excluded.updated_at",
+            (key.lower(), value, datetime.utcnow().isoformat()),
+        )
+        self.conn.commit()
+
+    def recall(self, key: str) -> str | None:
+        cur = self.conn.cursor()
+        cur.execute("SELECT value FROM facts WHERE key = ?", (key.lower(),))
+        row = cur.fetchone()
+        return row["value"] if row else None
+
+    def get_all_facts(self) -> dict:
+        cur = self.conn.cursor()
+        cur.execute("SELECT key, value FROM facts")
+        return {r["key"]: r["value"] for r in cur.fetchall()}
+
+    def add_task(self, description: str) -> int:
+        cur = self.conn.cursor()
+        cur.execute(
+            "INSERT INTO tasks(description, created_at) VALUES(?, ?)",
+            (description, datetime.utcnow().isoformat()),
+        )
+        self.conn.commit()
+        return cur.lastrowid
 
 
