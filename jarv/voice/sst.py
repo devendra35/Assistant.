@@ -41,6 +41,18 @@ class SpeechToText:
         if not self.available:
             return None
 
+
+          if STT_ENGINE == "google":
+                text = self._recognizer.recognize_google(audio, language=STT_LANGUAGE)
+            elif STT_ENGINE == "sphinx":
+                text = self._recognizer.recognize_sphinx(audio)
+            else:
+                text = self._recognizer.recognize_google(audio)
+
+            logger.debug(f"Heard: {text}")
+            return text.strip()
+
+
         import speech_recognition as sr
         try:
             with self._microphone as source:
@@ -49,3 +61,12 @@ class SpeechToText:
                     source, timeout=timeout, phrase_time_limit=phrase_limit
                 )
 
+  if STT_ENGINE == "google":
+                text = self._recognizer.recognize_google(audio, language=STT_LANGUAGE)
+            elif STT_ENGINE == "sphinx":
+                text = self._recognizer.recognize_sphinx(audio)
+            else:
+                text = self._recognizer.recognize_google(audio)
+
+            logger.debug(f"Heard: {text}")
+            return text.strip()
