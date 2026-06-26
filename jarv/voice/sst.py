@@ -27,3 +27,25 @@ class SpeechToText:
         except ImportError:
             logger.warning("speech_recognition not installed. Voice input disabled.")
             logger.warning("Install with: pip install SpeechRecognition pyaudio")
+            
+    @property
+    def available(self) -> bool:
+        return self._recognizer is not None and self._microphone is not None
+
+    def listen(self, timeout: int = 5, phrase_limit: int = 15) -> str | None:
+        """
+        Listen for speech and return transcribed text, or None on failure.
+        timeout: seconds to wait for speech to begin
+        phrase_limit: max seconds of phrase to capture
+        """
+        if not self.available:
+            return None
+
+        import speech_recognition as sr
+        try:
+            with self._microphone as source:
+                print("🎙  Listening...")
+                audio = self._recognizer.listen(
+                    source, timeout=timeout, phrase_time_limit=phrase_limit
+                )
+
