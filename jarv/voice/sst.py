@@ -41,18 +41,6 @@ class SpeechToText:
         if not self.available:
             return None
 
-
-          if STT_ENGINE == "google":
-                text = self._recognizer.recognize_google(audio, language=STT_LANGUAGE)
-            elif STT_ENGINE == "sphinx":
-                text = self._recognizer.recognize_sphinx(audio)
-            else:
-                text = self._recognizer.recognize_google(audio)
-
-            logger.debug(f"Heard: {text}")
-            return text.strip()
-
-
         import speech_recognition as sr
         try:
             with self._microphone as source:
@@ -70,3 +58,18 @@ class SpeechToText:
 
             logger.debug(f"Heard: {text}")
             return text.strip()
+ except sr.WaitTimeoutError:
+            return None
+        except sr.UnknownValueError:
+            logger.debug("Could not understand audio.")
+            return None
+        except sr.RequestError as e:
+            logger.error(f"STT API error: {e}")
+            return None
+
+    def listen_for_wake_word(self, timeout: int = 3) -> bool:
+        """Returns True if wake word is detected in the audio."""
+        text = self.listen(timeout=timeout, phrase_limit=3)
+        if text and WAKE_WORD.lower() in text.lower():
+            return True
+        return False
