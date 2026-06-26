@@ -6,10 +6,6 @@ from config import STT_ENGINE, STT_LANGUAGE, STT_ENERGY_THRESHOLD, WAKE_WORD
 
 logger = logging.getLogger("astrax.stt")
 
-    def listen_command(self) -> str | None:
-        """Listen for a full command after wake word detection."""
-        return self.listen(timeout=7, phrase_limit=20)
-
 
 class SpeechToText:
     def __init__(self):
